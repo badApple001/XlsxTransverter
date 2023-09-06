@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "XlsxTransverter": {
+      "commandName": "Project",
+      "commandLineArgs": "./xlsx\r\n./cs\r\n./data"
+    }
+  }
+}
