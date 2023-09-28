@@ -24,6 +24,7 @@ namespace XlsxTransverter
 
         decimal_,
         bool_,
+
     }
 
     abstract class Exporter

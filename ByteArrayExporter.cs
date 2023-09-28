@@ -9,7 +9,7 @@ namespace XlsxTransverter
     internal class ByteArrayExporter : Exporter
     {
 
-        public ByteArrayExporter( XlsxLoader loader, string dataFolder )
+        public ByteArrayExporter( XlsxLoader loader, string dataFolder, bool raw )
         {
             dataFolder = App.GetRealPath( dataFolder );
             this.loader = loader;
@@ -18,7 +18,14 @@ namespace XlsxTransverter
             {
                 using ( BinaryWriter bw = new BinaryWriter( fs, Encoding.UTF8 ) )
                 {
-                    WriteDataTable( dt, bw );
+                    if ( raw )
+                    {
+                        WriteRaw( dt, bw );
+                    }
+                    else
+                    {
+                        WriteDataTable( dt, bw );
+                    }
                     bw.Flush();
                     bw.Close();
                 }
@@ -26,13 +33,51 @@ namespace XlsxTransverter
             }
         }
 
-        public void WriteDataTable( DataTable dt, BinaryWriter bw )
+        public void WriteRaw( DataTable dt, BinaryWriter bw )
         {
+
+            //获取Header
             int ignoreRows = 3;
+            header = GetHeaders( dt );
 
             //写入行数
             bw.Write( ( ushort ) ( dt.Rows.Count - ignoreRows ) );
+
+            //Raw标志位
+            bw.Write( true );
+
+            //写入列数
+            bw.Write( ( ushort ) ( header.Item1.Count ) );
+
+            //写入列类型
+            for ( int i = 0; i < header.Item2.Count; i++ )
+            {
+                bw.Write( ( ushort ) header.Item2[ i ] );
+            }
+
+            //写入Var
+            for ( int i = 0; i < header.Item3.Count; i++ )
+            {
+                bw.Write( header.Item3[ i ] );
+            }
+
+            //写入数据
+            WriteData( ignoreRows, dt, bw );
+        }
+
+        public void WriteDataTable( DataTable dt, BinaryWriter bw )
+        {
+            int ignoreRows = 3;
+            //写入行数
+            bw.Write( ( ushort ) ( dt.Rows.Count - ignoreRows ) );
+            //Raw标志位
+            bw.Write( false );
             header = GetHeaders( dt );
+            WriteData( ignoreRows, dt, bw );
+        }
+
+        public void WriteData( int ignoreRows, DataTable dt, BinaryWriter bw )
+        {
             for ( int i = ignoreRows; i < dt.Rows.Count; i++ )
             {
                 for ( int j = 0; j < header.Item1.Count; j++ )
@@ -142,13 +187,13 @@ namespace XlsxTransverter
                                 }
                             }
                             break;
-                        default:
-                            break;
                     }
                 }
 
             }
+
         }
+
 
         public (List<int>, List<DataType>, List<string>, List<string>) GetHeaders( DataTable dataTable )
         {
