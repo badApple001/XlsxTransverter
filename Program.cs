@@ -6,15 +6,17 @@ string csParent = App.GetRealPath( args[ 1 ] );
 string binParent = App.GetRealPath( args[ 2 ] );
 bool.TryParse( args[ 3 ], out bool raw );
 
+
+Console.WriteLine( "param1: " + url );
+Console.WriteLine( "param2: " + csParent );
+Console.WriteLine( "param3: " + binParent );
+Console.WriteLine( "param4: " + raw );
 if ( url.ToLower().EndsWith( ".xlsx" ) )
 {
-
     if ( File.Exists( url ) )
     {
         XlsxLoader loader = new( url );
-
         ByteArrayExporter exporter = new( loader, binParent, raw );
-
         //导出CS声明文件
         if ( !raw )
         {
@@ -23,7 +25,6 @@ if ( url.ToLower().EndsWith( ".xlsx" ) )
         }
 
         //导出Ts声明文件.... 其它类型
-
         //导出完成
         Console.WriteLine( $"{loader.dataTableName} export finish." );
     }
