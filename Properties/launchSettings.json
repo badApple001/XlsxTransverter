@@ -1,8 +1,7 @@
 {
   "profiles": {
     "XlsxTransverter": {
-      "commandName": "Project",
-      "commandLineArgs": "./xlsx/MultiLanguage.xlsx\r\n./cs\r\n./data\r\nfalse"
+      "commandName": "Project"
     }
   }
 }
