@@ -1,7 +1,8 @@
 {
   "profiles": {
     "XlsxTransverter": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "./src\r\n./out/desc\r\n./out/bin\r\nfalse"
     }
   }
 }

@@ -29,7 +29,11 @@ namespace XlsxTransverter
                 var systemTypeName = typeName.Remove( typeName.Length - 1 );
 
                 sb.AppendLine( "\t/// <summary>" );
-                sb.AppendLine( "\t/// " + header.Item4[ i ] );
+                var lines = header.Item4[ i ].Split( '\n' );
+                foreach ( var line in lines )
+                {
+                    sb.AppendLine( "\t/// " + line );
+                }
                 sb.AppendLine( "\t/// </summary>" );
                 sb.AppendFormat( "\tpublic {0} {1};", systemTypeName, header.Item3[ i ] );
                 sb.AppendLine();

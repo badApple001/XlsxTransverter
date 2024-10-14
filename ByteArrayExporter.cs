@@ -136,7 +136,15 @@ namespace XlsxTransverter
                             break;
                         case DataType.string_:
                             {
-                                bw.Write( value.ToString() );
+                                string? strValue = value?.ToString();
+                                if ( string.IsNullOrEmpty( strValue ) )
+                                {
+                                    bw.Write( "" );
+                                }
+                                else
+                                {
+                                    bw.Write( strValue );
+                                }
                             }
                             break;
                         case DataType.float_:
