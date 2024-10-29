@@ -1,80 +1,84 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Text;
 
 namespace XlsxTransverter
 {
     internal class ByteArrayExporter : Exporter
     {
+        public const int ignoreRows = 3;
 
         public ByteArrayExporter( XlsxLoader loader, string dataFolder, bool raw )
         {
             dataFolder = App.GetRealPath( dataFolder );
             this.loader = loader;
-            var dt = dataTable = loader.Sheets[ 0 ];
+            int totalRows = 0;
+            for ( int i = 0; i < loader.Sheets.Count; i++ )
+            {
+                totalRows += ( loader.Sheets[ i ].Rows.Count );
+            }
+            Console.WriteLine( $"Excel: {loader.dataTableName}, total data line: {totalRows}" );
+            totalRows -= ignoreRows * loader.Sheets.Count;
+            Console.WriteLine( $"Excel: {loader.dataTableName}, real data line: {totalRows}" );
+
+
             using ( FileStream fs = new FileStream( Path.Combine( dataFolder, $"DR{loader.dataTableName}.bytes" ), FileMode.Create, FileAccess.Write ) )
             {
                 using ( BinaryWriter bw = new BinaryWriter( fs, Encoding.UTF8 ) )
                 {
+                    //写入行数
+                    bw.Write( ( ushort ) ( totalRows ) );
+                    //Raw标志位
+                    bw.Write( raw );
+                    //获取头信息
+                    header = GetHeaders( loader.Sheets[ 0 ] );
+                    //源数据处理
                     if ( raw )
                     {
-                        WriteRaw( dt, bw );
+                        //写入列数
+                        bw.Write( ( ushort ) ( header.Item1.Count ) );
+                       
+                        //写入列类型
+                        for ( int i = 0; i < header.Item2.Count; i++ )
+                        {
+                            bw.Write( ( ushort ) header.Item2[ i ] );
+                        }
+                        //写入Var
+                        for ( int i = 0; i < header.Item3.Count; i++ )
+                        {
+                            bw.Write( header.Item3[ i ] );
+                        }
                     }
-                    else
+
+
+                    for ( int i = 0; i < loader.Sheets.Count; i++ )
                     {
+                        var dt = dataTable = loader.Sheets[ i ];
+                        var var_ = dt.Rows[ 0 ][ 0 ];
+                        if ( var_ == null )
+                        {
+                            continue;
+                        }
+                        var varName = var_.ToString();
+                        if ( string.IsNullOrEmpty( varName ) || string.IsNullOrWhiteSpace( varName ) || varName.StartsWith( "#" ) )
+                        {
+                            continue;
+                        }
+
                         WriteDataTable( dt, bw );
                     }
                     bw.Flush();
                     bw.Close();
+                    fs.Close();
                 }
-                fs.Close();
             }
         }
 
-        public void WriteRaw( DataTable dt, BinaryWriter bw )
-        {
-
-            //获取Header
-            int ignoreRows = 3;
-            header = GetHeaders( dt );
-
-            //写入行数
-            bw.Write( ( ushort ) ( dt.Rows.Count - ignoreRows ) );
-
-            //Raw标志位
-            bw.Write( true );
-
-            //写入列数
-            bw.Write( ( ushort ) ( header.Item1.Count ) );
-
-            //写入列类型
-            for ( int i = 0; i < header.Item2.Count; i++ )
-            {
-                bw.Write( ( ushort ) header.Item2[ i ] );
-            }
-
-            //写入Var
-            for ( int i = 0; i < header.Item3.Count; i++ )
-            {
-                bw.Write( header.Item3[ i ] );
-            }
-
-            //写入数据
-            WriteData( ignoreRows, dt, bw );
-        }
 
         public void WriteDataTable( DataTable dt, BinaryWriter bw )
         {
-            int ignoreRows = 3;
-            //写入行数
-            bw.Write( ( ushort ) ( dt.Rows.Count - ignoreRows ) );
-            //Raw标志位
-            bw.Write( false );
-            header = GetHeaders( dt );
             WriteData( ignoreRows, dt, bw );
         }
+
 
         public void WriteData( int ignoreRows, DataTable dt, BinaryWriter bw )
         {
